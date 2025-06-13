@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>استعراض المتقدمين</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      padding: 10px;
+    }
+    h2 {
+      text-align: center;
+      color: #2d9958;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .card img {
+      width: 120px;
+      height: 120px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+    .card h3 {
+      margin: 5px 0;
+      font-size: 18px;
+    }
+    .card p {
+      margin: 3px 0;
+      color: #444;
+      font-size: 14px;
+    }
+    .card button {
+      margin-top: 10px;
+      padding: 6px 15px;
+      background: #2d9958;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h2>قائمة المتقدمين</h2>
+<div id="list"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAfvxROrhBdsFxkX9U5kriI4ySs9c41roY",
+    authDomain: "bangadata-57f98.firebaseapp.com",
+    projectId: "bangadata-57f98",
+    storageBucket: "bangadata-57f98.appspot.com",
+    messagingSenderId: "26361247251",
+    appId: "1:26361247251:web:0bf34e6df881f45110f1e6",
+    measurementId: "G-C4L0MX3K1D"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const list = document.getElementById("list");
+
+  async function loadApplicants() {
+    const querySnapshot = await getDocs(collection(db, "JOBS", "job-062025", "applicants"));
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const img = document.createElement("img");
+      if (data.photoUrl) {
+        img.src = data.photoUrl;
+      } else {
+        img.style.display = "none";
+      }
+      img.alt = "الصورة";
+
+      const name = document.createElement("h3");
+      name.textContent = data.name || "—";
+
+      const id = document.createElement("p");
+      id.textContent = "الهوية: " + doc.id;
+
+      const phone = document.createElement("p");
+      phone.textContent = "الجوال: " + (data.phone || "—");
+
+      const cvButton = document.createElement("button");
+      cvButton.textContent = "عرض السيرة الذاتية";
+      cvButton.onclick = () => {
+        if (data.cvUrl) {
+          window.open(data.cvUrl, "_blank");
+        } else {
+          alert("لا توجد سيرة ذاتية مرفوعة");
+        }
+      };
+
+      card.appendChild(img);
+      card.appendChild(name);
+      card.appendChild(id);
+      card.appendChild(phone);
+      card.appendChild(cvButton);
+      list.appendChild(card);
+    });
+  }
+
+  loadApplicants();
+</script>
+
+</body>
+</html>
