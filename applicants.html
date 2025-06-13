@@ -272,7 +272,7 @@
         { label: "التخصص", value: data.major },
         { label: "هل تملك سيارة؟", value: data.car },
         { label: "هل سبق العمل كاشير؟", value: data.experience },
-        { label: "وقت التقديم", value: data.timestamp?.split("T")[0] }
+        { label: "وقت التقديم", value: data.timestamp ? new Date(data.timestamp).toLocaleString("en-US", { hour12: true }) : "—" }
       ];
 
       fields.forEach(f => {
@@ -352,4 +352,3 @@
 
 </body>
 </html>
-
