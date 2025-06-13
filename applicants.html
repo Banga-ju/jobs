@@ -8,55 +8,193 @@
     body {
       font-family: sans-serif;
       background: #f2f2f2;
-      padding: 10px;
+      padding: 15px;
     }
+
+    #passwordPrompt {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+
+    #passwordBox {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    #passwordInput {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      width: 200px;
+    }
+
+    #mainContent {
+      display: none;
+    }
+
     h2 {
       text-align: center;
       color: #2d9958;
     }
+
+    .filters {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+
+    select {
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
     .card {
       background: #fff;
       border-radius: 10px;
       padding: 15px;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
     }
+
     .card img {
-      width: 120px;
-      height: 120px;
-      border-radius: 10px;
+      width: 130px;
+      height: 130px;
+      border-radius: 12px;
       object-fit: cover;
       border: 1px solid #ccc;
       margin-bottom: 10px;
+      cursor: pointer;
     }
+
     .card h3 {
-      margin: 5px 0;
-      font-size: 18px;
+      margin: 5px 0 10px 0;
+      font-size: 20px;
     }
-    .card p {
-      margin: 3px 0;
-      color: #444;
+
+    .label {
+      background-color: #eee;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin: 4px 0;
+      width: 100%;
+      max-width: 320px;
       font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      direction: rtl;
     }
+
+    .label span:first-child {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .label span:last-child {
+      text-align: left;
+      color: #444;
+    }
+
     .card button {
-      margin-top: 10px;
+      margin-top: 12px;
       padding: 6px 15px;
       background: #2d9958;
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 14px;
+    }
+
+    #imageModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    #modalImage {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #000;
     }
   </style>
 </head>
 <body>
 
-<h2>قائمة المتقدمين</h2>
-<div id="list"></div>
+<div id="passwordPrompt">
+  <div id="passwordBox">
+    <h3>أدخل كلمة المرور</h3>
+    <input type="password" id="passwordInput" placeholder="••••••" />
+    <br>
+    <button onclick="checkPassword()">دخول</button>
+  </div>
+</div>
+
+<div id="mainContent">
+  <h2>قائمة المتقدمين</h2>
+
+  <div class="filters">
+    <select id="areaFilter">
+      <option value="">كل المناطق</option>
+    </select>
+    <select id="districtFilter">
+      <option value="">كل الأحياء</option>
+    </select>
+    <select id="carFilter">
+      <option value="">امتلاك سيارة</option>
+      <option value="نعم">نعم</option>
+      <option value="لا">لا</option>
+    </select>
+    <select id="expFilter">
+      <option value="">خبرة كاشير</option>
+      <option value="نعم">نعم</option>
+      <option value="لا">لا</option>
+    </select>
+  </div>
+
+  <div id="list"></div>
+
+  <div id="imageModal">
+    <img id="modalImage" src="" />
+  </div>
+</div>
+
+<script>
+  function checkPassword() {
+    const input = document.getElementById("passwordInput").value;
+    const hashed = btoa(input);
+    if (hashed === "MTM1Nzk=") {
+      document.getElementById("passwordPrompt").style.display = "none";
+      document.getElementById("mainContent").style.display = "block";
+    } else {
+      alert("كلمة المرور غير صحيحة");
+    }
+  }
+</script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -76,53 +214,142 @@
   const db = getFirestore(app);
 
   const list = document.getElementById("list");
+  const areaFilter = document.getElementById("areaFilter");
+  const districtFilter = document.getElementById("districtFilter");
+  const carFilter = document.getElementById("carFilter");
+  const expFilter = document.getElementById("expFilter");
 
-  async function loadApplicants() {
-    const querySnapshot = await getDocs(collection(db, "JOBS", "job-062025", "applicants"));
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("modalImage");
 
+  function openImageInModal(url) {
+    modalImg.src = url;
+    modal.style.display = "flex";
+  }
+
+  modal.onclick = () => {
+    modal.style.display = "none";
+  };
+
+  function calculateAge(birthdateStr) {
+    const birthDate = new Date(birthdateStr);
+    if (isNaN(birthDate)) return "—";
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+    return age;
+  }
+
+  let allApplicants = [];
+
+  function renderApplicants(applicants) {
+    list.innerHTML = "";
+    applicants.forEach(data => {
       const card = document.createElement("div");
       card.className = "card";
 
-      const img = document.createElement("img");
       if (data.photoUrl) {
+        const img = document.createElement("img");
         img.src = data.photoUrl;
-      } else {
-        img.style.display = "none";
+        img.alt = "الصورة";
+        img.onclick = () => openImageInModal(data.photoUrl);
+        card.appendChild(img);
       }
-      img.alt = "الصورة";
 
       const name = document.createElement("h3");
       name.textContent = data.name || "—";
+      card.appendChild(name);
 
-      const id = document.createElement("p");
-      id.textContent = "الهوية: " + doc.id;
+      const fields = [
+        { label: "رقم الهوية", value: data.id },
+        { label: "رقم الجوال", value: data.phone },
+        { label: "تاريخ الميلاد", value: data.birthdate },
+        { label: "العمر", value: calculateAge(data.birthdate) },
+        { label: "السكن - المنطقة", value: data.area },
+        { label: "الحي", value: data.district },
+        { label: "السنة الدراسية", value: data.year },
+        { label: "التخصص", value: data.major },
+        { label: "هل تملك سيارة؟", value: data.car },
+        { label: "هل سبق العمل كاشير؟", value: data.experience },
+        { label: "وقت التقديم", value: data.timestamp?.split("T")[0] }
+      ];
 
-      const phone = document.createElement("p");
-      phone.textContent = "الجوال: " + (data.phone || "—");
+      fields.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "label";
+        div.innerHTML = `<span>${f.label}</span><span>${f.value || "—"}</span>`;
+        card.appendChild(div);
+      });
 
       const cvButton = document.createElement("button");
       cvButton.textContent = "عرض السيرة الذاتية";
       cvButton.onclick = () => {
-        if (data.cvUrl) {
-          window.open(data.cvUrl, "_blank");
-        } else {
-          alert("لا توجد سيرة ذاتية مرفوعة");
-        }
+        if (data.cvUrl) window.open(data.cvUrl, "_blank");
+        else alert("لا توجد سيرة ذاتية مرفوعة");
       };
-
-      card.appendChild(img);
-      card.appendChild(name);
-      card.appendChild(id);
-      card.appendChild(phone);
       card.appendChild(cvButton);
+
       list.appendChild(card);
     });
   }
+
+  function applyFilters() {
+    const selectedArea = areaFilter.value;
+    const selectedDistrict = districtFilter.value;
+    const selectedCar = carFilter.value;
+    const selectedExp = expFilter.value;
+
+    const filtered = allApplicants.filter(app =>
+      (!selectedArea || app.area === selectedArea) &&
+      (!selectedDistrict || app.district === selectedDistrict) &&
+      (!selectedCar || app.car === selectedCar) &&
+      (!selectedExp || app.experience === selectedExp)
+    );
+
+    renderApplicants(filtered);
+  }
+
+  async function loadApplicants() {
+    const snapshot = await getDocs(collection(db, "JOBS", "job-062025", "applicants"));
+    const areas = new Set();
+    const districts = new Set();
+    allApplicants = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      data.id = doc.id;
+      allApplicants.push(data);
+
+      if (data.area) areas.add(data.area);
+      if (data.district) districts.add(data.district);
+    });
+
+    areas.forEach(area => {
+      const option = document.createElement("option");
+      option.value = area;
+      option.textContent = area;
+      areaFilter.appendChild(option);
+    });
+
+    districts.forEach(dist => {
+      const option = document.createElement("option");
+      option.value = dist;
+      option.textContent = dist;
+      districtFilter.appendChild(option);
+    });
+
+    renderApplicants(allApplicants);
+  }
+
+  areaFilter.addEventListener("change", applyFilters);
+  districtFilter.addEventListener("change", applyFilters);
+  carFilter.addEventListener("change", applyFilters);
+  expFilter.addEventListener("change", applyFilters);
 
   loadApplicants();
 </script>
 
 </body>
 </html>
+
