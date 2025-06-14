@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>التقديم على وظيفة كاشير </title>
+  <title>التقديم على وظيفة كاشير - عصيرات بنقا</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -142,11 +142,23 @@
     <div id="errorBox"></div>
 
     <form onsubmit="return false;" novalidate>
-      <div><label>رقم الهوية (10 أرقام)</label><input type="tel" name="id" required /></div>
+      <div>
+        <label>رقم الهوية (10 أرقام)</label>
+        <input type="tel" name="id" maxlength="10" pattern="\d{10}" required />
+      </div>
+      
       <div><label>الاسم الرباعي</label><input type="text" name="fullname" required /></div>
       <div><label>تاريخ الميلاد (ميلادي)</label><input type="date" name="birthdate" required /></div>
-      <div><label>رقم الجوال</label><input type="tel" name="phone" inputmode="numeric" required /></div>
+
       <div>
+        <label>رقم الجوال</label>
+        <input type="tel" name="phone" inputmode="numeric" maxlength="10" pattern="\d{10}" required />
+      </div>
+      
+      <div>
+        <div><label>البريد الإلكتروني</label><input type="email" name="email" required /></div>
+
+
         <label>السكن - المنطقة</label>
         <select name="area" required>
           <option value="">اختر المنطقة</option>
@@ -167,6 +179,23 @@
           <option>الخامسة</option>
         </select>
       </div>
+
+      <div>
+        <label>الجامعة</label>
+        <select name="university" id="university" required onchange="toggleOtherUniversity()">
+          <option value="">اختر الجامعة</option>
+          <option>جامعة الملك فيصل بالاحساء</option>
+          <option>جامعة الامام عبدالرحمن بن فيصل</option>
+          <option value="other">أخرى</option>
+        </select>
+      </div>
+      <div id="otherUniversityDiv" style="display:none;">
+        <label>اذكر اسم الجامعة</label>
+        <input type="text" name="university_other" id="university_other" />
+      </div>
+
+      
+
       <div><label>التخصص</label><input type="text" name="major" required /></div>
       <div>
         <label>هل تملك سيارة؟</label>
@@ -186,8 +215,10 @@
       <div><label>السيرة الذاتية (اختياري)</label><input type="file" name="cv" accept=".pdf,.doc,.docx" /></div>
 
       <div id="loading" style="display:none; text-align:center;">
+        <img src="loading.gif" alt="loading" style="width: 60px; margin-bottom: 10px;" />
         <p>جاري الإرسال...</p>
       </div>
+      
 
       
       <button type="submit">إرسال الطلب</button>
@@ -197,6 +228,21 @@
   <script>
     function validateForm() {
       const errors = [];
+
+
+      const email = document.querySelector('input[name="email"]').value.trim();
+if (!email || !/^\S+@\S+\.\S+$/.test(email)) errors.push("يرجى إدخال بريد إلكتروني صالح.");
+
+
+      const university = document.querySelector('select[name="university"]').value;
+if (!university) errors.push("يرجى اختيار الجامعة.");
+if (university === "other") {
+  const otherUni = document.querySelector('input[name="university_other"]').value.trim();
+  if (!otherUni) errors.push("يرجى كتابة اسم الجامعة.");
+}
+
+
+
       const id = document.querySelector('input[name="id"]').value.trim();
       const phone = document.querySelector('input[name="phone"]').value.trim();
       const nameParts = document.querySelector('input[name="fullname"]').value.trim().split(/\s+/);
@@ -211,7 +257,7 @@
 if (!birthdate) errors.push("يرجى إدخال تاريخ الميلاد.");
 
       if (!/^\d{10}$/.test(id)) errors.push("رقم الهوية يجب أن يتكون من 10 أرقام.");
-      if (nameParts.length !== 4) errors.push("الاسم يجب أن يكون رباعي.");
+      if (nameParts.length < 4) errors.push("الاسم يجب أن يكون رباعي.");
       if (!/^\d{10}$/.test(phone)) errors.push("رقم الجوال يجب أن يتكون من 10 أرقام.");
       if (area === "") errors.push("يجب اختيار المنطقة.");
       if (!district) errors.push("يرجى إدخال الحي.");
@@ -232,6 +278,14 @@ if (!birthdate) errors.push("يرجى إدخال تاريخ الميلاد.");
         return true;
       }
     }
+
+    function toggleOtherUniversity() {
+  const uni = document.getElementById("university").value;
+  document.getElementById("otherUniversityDiv").style.display = (uni === "other") ? "block" : "none";
+}
+
+
+
   </script>
 
 <script type="module">
@@ -272,6 +326,10 @@ if (!birthdate) errors.push("يرجى إدخال تاريخ الميلاد.");
     const photoFile = formData.get("photo");
     const cvFile = formData.get("cv");
     const folderName = `${name} - ${id}`;
+    const university = formData.get("university");
+const university_other = formData.get("university_other")?.trim() || "";
+const email = formData.get("email").trim();
+
 
     async function toBase64(file) {
       return new Promise((resolve, reject) => {
@@ -339,10 +397,27 @@ data.append("filename", `${id} - ${label}`); // اسم الملف = رقم ال�
       experience,
       photoUrl,
       cvUrl,
+      email,
+      university: university === "other" ? university_other : university,
       timestamp: new Date().toISOString()
     });
 
-    form.innerHTML = `<h2>تم استلام الطلب بنجاح</h2>`;
+const firstName = name.split(" ")[0];
+
+
+
+form.innerHTML = `
+  <div style="text-align: center;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Yes_Check_Circle.svg/1200px-Yes_Check_Circle.svg.png" alt="تم" style="width: 80px; margin-bottom: 15px;" />
+    <h2>عزيزي ${firstName}<br>
+    تم استلام طلبكم بنجاح<br>
+    مع تمنياتنا لكم بالتوفيق</h2>
+  </div>
+`;
+
+
+
+
   });
 </script>
 
