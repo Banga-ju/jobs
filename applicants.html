@@ -290,6 +290,13 @@
       };
       card.appendChild(cvButton);
 
+      const rateButton = document.createElement("button");
+rateButton.textContent = "ترشيح";
+rateButton.onclick = () => openRatingDialog(data.id);
+card.appendChild(rateButton);
+
+
+
       list.appendChild(card);
     });
   }
@@ -311,41 +318,141 @@
   }
 
   async function loadApplicants() {
-    const snapshot = await getDocs(collection(db, "JOBS", "job-062025", "applicants"));
-    const areas = new Set();
-    const districts = new Set();
-    allApplicants = [];
+  const snapshot = await getDocs(collection(db, "JOBS", "job-062025", "applicants"));
+  const areas = new Set();
+  const districts = new Set();
+  allApplicants = [];
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      data.id = doc.id;
-      allApplicants.push(data);
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    data.id = doc.id;
+    allApplicants.push(data);
 
-      if (data.area) areas.add(data.area);
-      if (data.district) districts.add(data.district);
-    });
+    if (data.area) areas.add(data.area);
+    if (data.district) districts.add(data.district);
+  });
 
-    areas.forEach(area => {
-      const option = document.createElement("option");
-      option.value = area;
-      option.textContent = area;
-      areaFilter.appendChild(option);
-    });
+  areas.forEach(area => {
+    const option = document.createElement("option");
+    option.value = area;
+    option.textContent = area;
+    areaFilter.appendChild(option);
+  });
 
-    districts.forEach(dist => {
-      const option = document.createElement("option");
-      option.value = dist;
-      option.textContent = dist;
-      districtFilter.appendChild(option);
-    });
+  districts.forEach(dist => {
+    const option = document.createElement("option");
+    option.value = dist;
+    option.textContent = dist;
+    districtFilter.appendChild(option);
+  });
 
-    renderApplicants(allApplicants);
-  }
+  allApplicants.sort((a, b) => {
+    const timeA = new Date(a.timestamp).getTime() || 0;
+    const timeB = new Date(b.timestamp).getTime() || 0;
+    return timeB - timeA;
+  });
+
+  renderApplicants(allApplicants);
+}
+
 
   areaFilter.addEventListener("change", applyFilters);
   districtFilter.addEventListener("change", applyFilters);
   carFilter.addEventListener("change", applyFilters);
   expFilter.addEventListener("change", applyFilters);
+
+
+  function openRatingDialog(docId) {
+  const names = ["كميل", "علي", "محمد"];
+
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.top = 0;
+  overlay.style.left = 0;
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.background = "rgba(0,0,0,0.5)";
+  overlay.style.display = "flex";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.zIndex = "10000";
+
+  const box = document.createElement("div");
+  box.style.background = "#fff";
+  box.style.padding = "20px";
+  box.style.borderRadius = "10px";
+  box.style.textAlign = "center";
+  box.style.minWidth = "300px";
+
+  const title = document.createElement("h3");
+  title.textContent = "اختر اسمك كمُقيِّم";
+  box.appendChild(title);
+
+  names.forEach(name => {
+    const btn = document.createElement("button");
+    btn.textContent = name;
+    btn.style.margin = "10px";
+    btn.style.padding = "8px 16px";
+    btn.style.background = "#2d9958";
+    btn.style.color = "#fff";
+    btn.style.border = "none";
+    btn.style.borderRadius = "6px";
+    btn.style.cursor = "pointer";
+
+    btn.onclick = () => showNumberPad(name);
+    box.appendChild(btn);
+  });
+
+  function showNumberPad(evaluatorName) {
+    box.innerHTML = "";
+    const prompt = document.createElement("p");
+    prompt.textContent = `اختر تقييم من 1 إلى 10 لـ ${evaluatorName}`;
+    box.appendChild(prompt);
+
+    const grid = document.createElement("div");
+    grid.style.display = "grid";
+    grid.style.gridTemplateColumns = "repeat(5, 1fr)";
+    grid.style.gap = "10px";
+    grid.style.margin = "20px 0";
+
+    for (let i = 1; i <= 10; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      btn.style.padding = "10px";
+      btn.style.fontSize = "16px";
+      btn.style.background = "#eee";
+      btn.style.border = "1px solid #ccc";
+      btn.style.borderRadius = "6px";
+      btn.style.cursor = "pointer";
+
+      btn.onclick = async () => {
+
+ // إنشاء صورة التحميل
+ const loading = document.createElement("img");
+  loading.src = "loading.gif";
+  loading.style.width = "40px";
+  loading.style.margin = "20px auto";
+  loading.style.display = "block";
+  box.innerHTML = ""; // تنظيف الصندوق
+  box.appendChild(loading);
+
+        const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+        const updates = {};
+        updates[`تقييم ${evaluatorName}`] = i;
+        await updateDoc(doc(db, "JOBS", "job-062025", "applicants", docId), updates);
+        document.body.removeChild(overlay);
+      };
+
+      grid.appendChild(btn);
+    }
+
+    box.appendChild(grid);
+  }
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
 
   loadApplicants();
 </script>
