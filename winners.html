@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>المرشحون</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      padding: 15px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2d9958;
+    }
+
+    .banner {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 20px 0 10px;
+      color: #2d9958;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .card img {
+      width: 100px;
+      height: 100px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .card h3 {
+      margin: 5px 0;
+      font-size: 18px;
+    }
+
+    .score {
+      font-size: 14px;
+      margin-top: 6px;
+      background: #eee;
+      padding: 6px;
+      border-radius: 6px;
+      width: 100%;
+    }
+
+    .total {
+      margin-top: 6px;
+      font-weight: bold;
+      color: #2d9958;
+    }
+  </style>
+</head>
+<body>
+
+<h2>المرشحون</h2>
+<div id="list" class="container"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAfvxROrhBdsFxkX9U5kriI4ySs9c41roY",
+    authDomain: "bangadata-57f98.firebaseapp.com",
+    projectId: "bangadata-57f98",
+    storageBucket: "bangadata-57f98.appspot.com",
+    messagingSenderId: "26361247251",
+    appId: "1:26361247251:web:0bf34e6df881f45110f1e6"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const list = document.getElementById("list");
+
+  function calculateAge(birthdateStr) {
+    const birthDate = new Date(birthdateStr);
+    if (isNaN(birthDate)) return "—";
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+    return age;
+  }
+
+  async function loadNominated() {
+    const snapshot = await getDocs(collection(db, "JOBS", "job-062025", "applicants"));
+    const evaluators = ["كميل", "علي", "محمد"];
+    let applicants = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      let total = 0;
+      let hasRating = false;
+      evaluators.forEach(e => {
+        const val = data[`تقييم ${e}`];
+        if (typeof val === "number") {
+          total += val;
+          hasRating = true;
+        }
+      });
+
+      if (hasRating) {
+        data.total = total;
+        data.id = doc.id;
+        applicants.push(data);
+      }
+    });
+
+    applicants.sort((a, b) => b.total - a.total);
+
+    list.innerHTML = "";
+    applicants.forEach((app, index) => {
+      const wrapper = document.createElement("div");
+      wrapper.style.display = "flex";
+      wrapper.style.flexDirection = "column";
+      wrapper.style.alignItems = "center";
+
+      const card = document.createElement("div");
+      card.className = "card";
+
+      if (app.photoUrl) {
+        const img = document.createElement("img");
+        img.src = app.photoUrl;
+        card.appendChild(img);
+      }
+
+      const name = document.createElement("h3");
+      name.textContent = app.name || "—";
+      card.appendChild(name);
+
+      // الحقول الإضافية
+      const fields = [
+        { label: "الحي", value: app.district },
+        { label: "هل يملك سيارة؟", value: app.car },
+        { label: "العمر", value: calculateAge(app.birthdate) },
+        { label: "التخصص", value: app.major }
+      ];
+
+      fields.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "score";
+        div.textContent = `${f.label}: ${f.value || "—"}`;
+        card.appendChild(div);
+      });
+
+      evaluators.forEach(ev => {
+        if (typeof app[`تقييم ${ev}`] === "number") {
+          const score = document.createElement("div");
+          score.className = "score";
+          score.textContent = `تقييم ${ev}: ${app[`تقييم ${ev}`]}`;
+          card.appendChild(score);
+        }
+      });
+
+      const total = document.createElement("div");
+      total.className = "total";
+      total.textContent = `المجموع: ${app.total}`;
+      card.appendChild(total);
+
+      // إنشاء بانر حسب الترتيب
+      const banner = document.createElement("div");
+      banner.className = "banner";
+      if (index === 0) banner.textContent = "المرشح الأول";
+      else if (index === 1) banner.textContent = "المرشح الثاني";
+      else if (index === 2) banner.textContent = "المرشح الثالث";
+      else banner.textContent = "";
+
+      if (banner.textContent) wrapper.appendChild(banner);
+      wrapper.appendChild(card);
+      list.appendChild(wrapper);
+    });
+  }
+
+  loadNominated();
+</script>
+
+</body>
+</html>
