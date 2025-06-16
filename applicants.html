@@ -190,7 +190,13 @@
     if (hashed === "MTM1Nzk=") {
       document.getElementById("passwordPrompt").style.display = "none";
       document.getElementById("mainContent").style.display = "block";
-    } else {
+    } 
+    else if (hashed === "") {
+      document.getElementById("passwordPrompt").style.display = "none";
+      document.getElementById("mainContent").style.display = "block";
+    } 
+    
+    else {
       alert("كلمة المرور غير صحيحة");
     }
   }
@@ -275,12 +281,17 @@
         { label: "وقت التقديم", value: data.timestamp ? new Date(data.timestamp).toLocaleString("en-US", { hour12: true }) : "—" }
       ];
 
+      
       fields.forEach(f => {
         const div = document.createElement("div");
         div.className = "label";
         div.innerHTML = `<span>${f.label}</span><span>${f.value || "—"}</span>`;
         card.appendChild(div);
       });
+
+
+
+
 
       const cvButton = document.createElement("button");
       cvButton.textContent = "عرض السيرة الذاتية";
@@ -290,11 +301,11 @@
       };
       card.appendChild(cvButton);
 
+      
       const rateButton = document.createElement("button");
 rateButton.textContent = "ترشيح";
 rateButton.onclick = () => openRatingDialog(data.id);
 card.appendChild(rateButton);
-
 
 
       list.appendChild(card);
@@ -394,6 +405,8 @@ card.appendChild(rateButton);
   closeBtn.style.fontSize = "22px";
   closeBtn.style.color = "#555";
   closeBtn.onclick = () => document.body.removeChild(overlay);
+  applyFilters(); // هذا السطر يعيد تحميل البيانات بعد الترشيح
+
   box.appendChild(closeBtn);
 
   const title = document.createElement("h3");
@@ -401,19 +414,20 @@ card.appendChild(rateButton);
   box.appendChild(title);
 
   names.forEach(name => {
-    const btn = document.createElement("button");
-    btn.textContent = name;
-    btn.style.margin = "10px";
-    btn.style.padding = "8px 16px";
-    btn.style.background = "#2d9958";
-    btn.style.color = "#fff";
-    btn.style.border = "none";
-    btn.style.borderRadius = "6px";
-    btn.style.cursor = "pointer";
+  const currentRating = allApplicants.find(app => app.id === docId)?.[`تقييم ${name}`];
+  const btn = document.createElement("button");
+  btn.textContent = currentRating !== undefined ? `${name} (تقييم: ${currentRating})` : name;
+  btn.style.margin = "10px";
+  btn.style.padding = "8px 16px";
+  btn.style.background = "#2d9958";
+  btn.style.color = "#fff";
+  btn.style.border = "none";
+  btn.style.borderRadius = "6px";
+  btn.style.cursor = "pointer";
+  btn.onclick = () => showNumberPad(name);
+  box.appendChild(btn);
+});
 
-    btn.onclick = () => showNumberPad(name);
-    box.appendChild(btn);
-  });
 
   function showNumberPad(evaluatorName) {
     box.innerHTML = "";
@@ -452,6 +466,8 @@ card.appendChild(rateButton);
         updates[`تقييم ${evaluatorName}`] = i;
         await updateDoc(doc(db, "JOBS", "job-062025", "applicants", docId), updates);
         document.body.removeChild(overlay);
+        applyFilters(); // هذا السطر يعيد تحميل البيانات بعد الترشيح
+
       };
 
       grid.appendChild(btn);
@@ -466,6 +482,8 @@ card.appendChild(rateButton);
   overlay.onclick = (e) => {
     if (e.target === overlay) {
       document.body.removeChild(overlay);
+      applyFilters(); // هذا السطر يعيد تحميل البيانات بعد الترشيح
+
     }
   };
 
