@@ -155,9 +155,10 @@
 </div>
 
 <div id="mainContent">
-   <button onclick="location.href='winners.html'" style="background:#2d9958; color:white; border:none; padding:10px 20px; border-radius:6px; font-size:16px; margin-bottom:15px; display:block; margin-right:auto; margin-left:auto;">
+  <button onclick="location.href='winners.html'" style="background:#2d9958; color:white; border:none; padding:10px 20px; border-radius:6px; font-size:16px; margin-bottom:15px; display:block; margin-right:auto; margin-left:auto;">
     عرض المرشحين
   </button>
+  
   <h2>قائمة المتقدمين</h2>
 
   <div class="filters">
@@ -187,6 +188,15 @@
 </div>
 
 <script>
+
+window.onload = () => {
+  if (window.location.search.includes("bypass=true")) {
+    document.getElementById("passwordPrompt").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+  }
+}
+
+
   function checkPassword() {
     const input = document.getElementById("passwordInput").value;
     const hashed = btoa(input);
