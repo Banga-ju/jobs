@@ -148,9 +148,9 @@
 <div id="passwordPrompt">
   <div id="passwordBox">
     <h3> أدخل كلمة المرور المكونة من ١٠ حروف وارقام</h3>
-    <input type="password" id="passwordInput" placeholder="******" />
+    <input type="password" id="passwordInput" placeholder="••••••" />
     <br>
-<button onclick="checkPassword()" style="padding: 12px 25px; font-size: 18px; background-color: #2d9958; color: white; border: none; border-radius: 8px; cursor: pointer;">دخول</button>
+    <button onclick="checkPassword()">دخول</button>
   </div>
 </div>
 
@@ -361,7 +361,6 @@ card.appendChild(rateButton);
   carFilter.addEventListener("change", applyFilters);
   expFilter.addEventListener("change", applyFilters);
 
-
   function openRatingDialog(docId) {
   const names = ["كميل", "علي", "محمد"];
 
@@ -383,6 +382,19 @@ card.appendChild(rateButton);
   box.style.borderRadius = "10px";
   box.style.textAlign = "center";
   box.style.minWidth = "300px";
+  box.style.position = "relative";
+
+  // زر الإغلاق (X)
+  const closeBtn = document.createElement("div");
+  closeBtn.textContent = "×";
+  closeBtn.style.position = "absolute";
+  closeBtn.style.top = "10px";
+  closeBtn.style.left = "10px";
+  closeBtn.style.cursor = "pointer";
+  closeBtn.style.fontSize = "22px";
+  closeBtn.style.color = "#555";
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+  box.appendChild(closeBtn);
 
   const title = document.createElement("h3");
   title.textContent = "اختر اسمك كمُقيِّم";
@@ -405,6 +417,7 @@ card.appendChild(rateButton);
 
   function showNumberPad(evaluatorName) {
     box.innerHTML = "";
+
     const prompt = document.createElement("p");
     prompt.textContent = `اختر تقييم من 1 إلى 10 لـ ${evaluatorName}`;
     box.appendChild(prompt);
@@ -426,15 +439,13 @@ card.appendChild(rateButton);
       btn.style.cursor = "pointer";
 
       btn.onclick = async () => {
-
- // إنشاء صورة التحميل
- const loading = document.createElement("img");
-  loading.src = "loading.gif";
-  loading.style.width = "40px";
-  loading.style.margin = "20px auto";
-  loading.style.display = "block";
-  box.innerHTML = ""; // تنظيف الصندوق
-  box.appendChild(loading);
+        const loading = document.createElement("img");
+        loading.src = "loading.gif";
+        loading.style.width = "40px";
+        loading.style.margin = "20px auto";
+        loading.style.display = "block";
+        box.innerHTML = "";
+        box.appendChild(loading);
 
         const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
         const updates = {};
@@ -450,6 +461,14 @@ card.appendChild(rateButton);
   }
 
   overlay.appendChild(box);
+
+  // إغلاق إذا ضغط برا الصندوق
+  overlay.onclick = (e) => {
+    if (e.target === overlay) {
+      document.body.removeChild(overlay);
+    }
+  };
+
   document.body.appendChild(overlay);
 }
 
