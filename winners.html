@@ -34,27 +34,22 @@
       color: #2d9958;
     }
 
-   .container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 15px;
-  justify-items: center;
-}
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+    }
 
-
- 
-.card {
-  width: 100%;
-  max-width: 160px; /* تصغير البطاقة */
-  background: #fff;
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
 
     .card img {
       width: 100px;
@@ -169,29 +164,48 @@
     card.className = "card";
 
     if (app.photoUrl) {
-      const img = document.createElement("img");
-      img.src = app.photoUrl;
-      card.appendChild(img);
-    }
+  const img = document.createElement("img");
+  img.src = app.photoUrl;
+  img.style.cursor = "pointer";
+  img.onclick = () => {
+    const fullImage = document.createElement("img");
+    fullImage.src = app.photoUrl;
+    fullImage.style.maxWidth = "100%";
+    fullImage.style.maxHeight = "80vh";
+    openModalWithContent(fullImage);
+  };
+  card.appendChild(img);
+}
 
     const name = document.createElement("h3");
     name.textContent = app.name || "—";
     card.appendChild(name);
-
     const fields = [
-      { label: "رقم الجوال", value: app.phone },
-      { label: "الحي", value: app.district },
-      { label: "هل يملك سيارة؟", value: app.car },
-      { label: "العمر", value: calculateAge(app.birthdate) },
-      { label: "التخصص", value: app.major }
-    ];
+  { label: "رقم الهوية", value: app.id },
+  { label: "رقم الجوال", value: app.phone },
+  { label: "تاريخ الميلاد", value: app.birthdate },
+  { label: "العمر", value: calculateAge(app.birthdate) },
+  { label: "السكن - المنطقة", value: app.area },
+  { label: "الحي", value: app.district },
+  { label: "السنة الدراسية", value: app.year },
+  { label: "التخصص", value: app.major },
+  { label: "هل تملك سيارة؟", value: app.car },
+  { label: "هل سبق العمل كاشير؟", value: app.experience },
+  {
+    label: "وقت التقديم",
+    value: app.timestamp
+      ? new Date(app.timestamp).toLocaleString("en-US", { hour12: true })
+      : "—"
+  }
+];
 
-    fields.forEach(f => {
-      const div = document.createElement("div");
-      div.className = "score";
-      div.textContent = `${f.label}: ${f.value || "—"}`;
-      card.appendChild(div);
-    });
+fields.forEach(f => {
+  const div = document.createElement("div");
+  div.className = "score";
+  div.textContent = `${f.label}: ${f.value || "—"}`;
+  card.appendChild(div);
+});
+
 
     filteredEvaluators.forEach(ev => {
       const val = app[`تقييم ${ev}`];
@@ -207,11 +221,54 @@
     totalDiv.className = "total";
     totalDiv.textContent = `المجموع: ${app.subtotal}`;
     card.appendChild(totalDiv);
+    if (app.cvUrl) {
+  const cvButton = document.createElement("button");
+  cvButton.textContent = "عرض السيرة الذاتية";
+  cvButton.style.marginTop = "10px";
+  cvButton.style.padding = "6px 12px";
+  cvButton.style.background = "#2d9958";
+  cvButton.style.color = "#fff";
+  cvButton.style.border = "none";
+  cvButton.style.borderRadius = "6px";
+  cvButton.style.cursor = "pointer";
+  cvButton.onclick = () => {
+    const iframe = document.createElement("iframe");
+    iframe.src = app.cvUrl;
+    iframe.style.width = "90vw";
+    iframe.style.height = "80vh";
+    iframe.style.border = "none";
+    openModalWithContent(iframe);
+  };
+  card.appendChild(cvButton);
+}
+
 
     wrapper.appendChild(card);
     list.appendChild(wrapper);
   });
 }
+
+
+function openModalWithContent(contentElement) {
+  const modal = document.getElementById("modal");
+  const modalBody = document.getElementById("modal-body");
+  modalBody.innerHTML = ""; // تفريغ المحتوى السابق
+  modalBody.appendChild(contentElement);
+  modal.style.display = "flex";
+}
+
+function closeModal(event) {
+  const modal = document.getElementById("modal");
+  const modalInner = document.getElementById("modal-inner");
+  if (!event || !modalInner.contains(event.target)) {
+    modal.style.display = "none";
+  }
+}
+
+
+
+
+
 
   async function loadApplicants() {
     const snapshot = await getDocs(collection(db, "JOBS", "job-062025", "applicants"));
@@ -224,6 +281,8 @@
       allApplicants.push(data);
     });
 
+
+
     const defaultSelected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
     renderApplicants(defaultSelected);
   }
@@ -235,8 +294,28 @@
     });
   });
 
+  
   loadApplicants();
+
+  document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") {
+    document.getElementById("modal").style.display = "none";
+  }
+});
+
+
 </script>
+
+
+<div id="modal" onclick="closeModal(event)" 
+     style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;">
+     <div id="modal-inner" style="background:#fff; padding:20px; border-radius:10px; max-width:90%; max-height:90%; overflow:auto; position:relative;">
+    <span onclick="closeModal()" 
+    style="position:absolute; top:10px; left:15px; font-size:22px; cursor:pointer; color:#333;">✕</span>
+
+    <div id="modal-body" style="display:flex; justify-content:center; align-items:center;"></div>
+  </div>
+</div>
 
 </body>
 </html>
