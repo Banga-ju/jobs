@@ -99,6 +99,8 @@
   <label><input type="checkbox" class="evaluator-filter" value="كميل" checked> كميل</label>
   <label><input type="checkbox" class="evaluator-filter" value="علي" checked> علي</label>
   <label><input type="checkbox" class="evaluator-filter" value="محمد" checked> محمد</label>
+    <label><input type="checkbox" class="evaluator-filter" value="العام" checked> العام</label>
+
 </div>
 
 <div id="list" class="container"></div>
@@ -213,7 +215,7 @@
 
   async function loadApplicants() {
     const snapshot = await getDocs(collection(db, "JOBS", "job-062025", "applicants"));
-    const evaluators = ["كميل", "علي", "محمد"];
+    const evaluators = ["كميل", "علي", "محمد","العام"];
     allApplicants = [];
 
     snapshot.forEach(doc => {
