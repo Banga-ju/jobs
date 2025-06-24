@@ -140,7 +140,7 @@
   </div>
 
   <script>
-    const API = "https://script.google.com/macros/s/AKfycbwSOKtLoqBk1qMEvhSTMzg7oYUYHkzcoG0sdAv5uSOInWfEsFLCReXCF0BKAuctuFe9NQ/exec";
+    const API = "https://script.google.com/macros/s/AKfycbwOiGhbUn2EdfEYCXxzrAsvXJHI_i187lA-7te6dZ_i0Z_Gqpyl9tFCJaQDjsf-v7luxw/exec";
 
     function showTab(id) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -161,9 +161,14 @@
     }
 
     function loadProducts() {
+      console.log("[loadProducts] بدء تحميل المنتجات...");
       fetch(API)
-        .then(res => res.json())
+        .then(res => {
+          console.log("[loadProducts] تم استلام الاستجابة");
+          return res.json();
+        })
         .then(data => {
+          console.log("[loadProducts] البيانات:", data);
           const list = document.getElementById('productList');
           list.innerHTML = '';
           const categorySet = new Set();
@@ -198,10 +203,14 @@
           });
 
           document.getElementById("categoryList").innerHTML = [...categorySet].map(c => `<div class='card'>${c}</div>`).join('');
+        })
+        .catch(err => {
+          console.error("[loadProducts] خطأ:", err);
         });
     }
 
     function submitProduct() {
+      console.log("[submitProduct] إرسال منتج...");
       const name = document.getElementById("newProductName").value;
       const desc = document.getElementById("newProductDescription").value;
       const img = document.getElementById("newProductImage").value;
@@ -209,34 +218,55 @@
       const offer = document.getElementById("newProductOffer").value;
       const cats = Array.from(document.getElementById("productCategories").selectedOptions).map(o => o.value);
       const id = randomID('prod');
-      const body = {
-        id, name, description: desc, image_url: img, base_price: price, offer_price: offer, categories: cats.join(", "), available: true
-      };
+      const body = { id, name, description: desc, image_url: img, base_price: price, offer_price: offer, categories: cats.join(", "), available: true };
+
+      console.log("[submitProduct] البيانات:", body);
 
       fetch(API + "?action=addProduct", {
         method: "POST",
         body: JSON.stringify(body),
         headers: { "Content-Type": "application/json" }
-      }).then(() => {
+      })
+      .then(res => {
+        console.log("[submitProduct] استجابة:", res);
+        return res.text();
+      })
+      .then(txt => {
+        console.log("[submitProduct] رد النص:", txt);
         alert("تم حفظ المنتج");
         loadProducts();
         showTab('products');
+      })
+      .catch(err => {
+        console.error("[submitProduct] خطأ:", err);
       });
     }
 
     function submitCategory() {
+      console.log("[submitCategory] إرسال تصنيف...");
       const name = document.getElementById("newCategoryName").value;
       const id = randomID('cat');
       const body = { id, name };
+
+      console.log("[submitCategory] البيانات:", body);
 
       fetch(API + "?action=addCategory", {
         method: "POST",
         body: JSON.stringify(body),
         headers: { "Content-Type": "application/json" }
-      }).then(() => {
+      })
+      .then(res => {
+        console.log("[submitCategory] استجابة:", res);
+        return res.text();
+      })
+      .then(txt => {
+        console.log("[submitCategory] رد النص:", txt);
         alert("تم حفظ التصنيف");
         loadProducts();
         showTab('categories');
+      })
+      .catch(err => {
+        console.error("[submitCategory] خطأ:", err);
       });
     }
 
