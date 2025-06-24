@@ -340,35 +340,41 @@
     
     // دالة لتحميل التصنيفات لقائمة الاختيار
     function loadCategoriesForSelect() {
-      const select = document.getElementById("productCategories");
-      select.innerHTML = '<option value="" disabled>جاري تحميل التصنيفات...</option>';
+  const select = document.getElementById("productCategories");
+  select.innerHTML = '<option value="" disabled>جاري تحميل التصنيفات...</option>';
+
+  fetch(API)
+    .then(res => {
+      if (!res.ok) throw new Error("Network response was not ok");
+      return res.json();
+    })
+    .then(data => {
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid data format");
+      }
+
+      const categorySet = new Set();
       
-      fetch(API)
-        .then(res => res.json())
-        .then(data => {
-          const categorySet = new Set();
-          
-          data.forEach(p => {
-            if (p.categories) {
-              p.categories.split(',').forEach(c => categorySet.add(c.trim()));
-            }
-          });
-          
-          select.innerHTML = '';
-          
-          categorySet.forEach(cat => {
-            const opt = document.createElement("option");
-            opt.value = cat;
-            opt.textContent = cat;
-            select.appendChild(opt);
-          });
-        })
-        .catch(err => {
-          console.error("Error loading categories:", err);
-          select.innerHTML = '<option value="" disabled>خطأ في تحميل التصنيفات</option>';
-        });
-    }
-    
+      data.forEach(p => {
+        if (p.categories) {
+          p.categories.split(',').forEach(c => categorySet.add(c.trim()));
+        }
+      });
+
+      select.innerHTML = '';
+      
+      categorySet.forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    })
+    .catch(err => {
+      console.error("Error loading categories:", err);
+      select.innerHTML = '<option value="" disabled>خطأ في تحميل التصنيفات</option>';
+    });
+}
     // دالة لإرسال منتج جديد
     function submitProduct() {
       const name = document.getElementById("newProductName").value.trim();
