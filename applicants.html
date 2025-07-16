@@ -160,7 +160,10 @@
   </button>
   
   <h2>قائمة المتقدمين</h2>
-
+  <button onclick="exportToExcel()" style="background:#44bde7; color:white; border:none; padding:10px 20px; border-radius:6px; font-size:16px; margin:10px auto; display:block;">
+    تصدير إلى Excel
+  </button>
+  
   <div class="filters">
     <select id="areaFilter">
       <option value="">كل المناطق</option>
@@ -178,6 +181,10 @@
       <option value="نعم">نعم</option>
       <option value="لا">لا</option>
     </select>
+
+    <input type="text" id="majorFilter" placeholder="ابحث بالتخصص..." style="padding:8px; font-size:14px; border-radius:6px; border:1px solid #ccc;" />
+
+
   </div>
 
   <div id="list"></div>
@@ -210,6 +217,7 @@ window.onload = () => {
     }
   }
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -326,13 +334,16 @@ card.appendChild(rateButton);
     const selectedDistrict = districtFilter.value;
     const selectedCar = carFilter.value;
     const selectedExp = expFilter.value;
+    const majorText = majorFilter.value.trim().toLowerCase();
+
 
     const filtered = allApplicants.filter(app =>
-      (!selectedArea || app.area === selectedArea) &&
-      (!selectedDistrict || app.district === selectedDistrict) &&
-      (!selectedCar || app.car === selectedCar) &&
-      (!selectedExp || app.experience === selectedExp)
-    );
+  (!selectedArea || app.area === selectedArea) &&
+  (!selectedDistrict || app.district === selectedDistrict) &&
+  (!selectedCar || app.car === selectedCar) &&
+  (!selectedExp || app.experience === selectedExp) &&
+  (!majorText || (app.major && app.major.toLowerCase().includes(majorText)))
+);
 
     renderApplicants(filtered);
   }
@@ -380,6 +391,9 @@ card.appendChild(rateButton);
   districtFilter.addEventListener("change", applyFilters);
   carFilter.addEventListener("change", applyFilters);
   expFilter.addEventListener("change", applyFilters);
+  const majorFilter = document.getElementById("majorFilter");
+majorFilter.addEventListener("input", applyFilters);
+
 
   function openRatingDialog(docId) {
   const names = ["كميل", "علي", "محمد","العام"];
@@ -498,6 +512,47 @@ card.appendChild(rateButton);
 
   document.body.appendChild(overlay);
 }
+
+function exportToExcel() {
+  const selectedArea = areaFilter.value;
+  const selectedDistrict = districtFilter.value;
+  const selectedCar = carFilter.value;
+  const selectedExp = expFilter.value;
+  const majorText = majorFilter.value.trim().toLowerCase();
+
+  const filtered = allApplicants.filter(app =>
+    (!selectedArea || app.area === selectedArea) &&
+    (!selectedDistrict || app.district === selectedDistrict) &&
+    (!selectedCar || app.car === selectedCar) &&
+    (!selectedExp || app.experience === selectedExp) &&
+    (!majorText || (app.major && app.major.toLowerCase().includes(majorText)))
+  );
+
+  const data = filtered.map(app => ({
+  "الاسم": app.name || "",
+  "رقم الهوية": app.id || "",
+  "رقم الجوال": app.phone || "",
+  "تاريخ الميلاد": app.birthdate || "",
+  "العمر": calculateAge(app.birthdate),
+  "المنطقة": app.area || "",
+  "الحي": app.district || "",
+  "السنة الدراسية": app.year || "",
+  "التخصص": app.major || "",
+  "يمتلك سيارة؟": app.car || "",
+  "خبرة كاشير؟": app.experience || "",
+  "رابط الصورة": app.photoUrl || "",
+  "وقت التقديم": app.timestamp ? new Date(app.timestamp).toLocaleString("en-US", { hour12: true }) : ""
+}));
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Applicants");
+
+  const now = new Date();
+  const fileName = `applicants_${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}.xlsx`;
+  XLSX.writeFile(workbook, fileName);
+}
+window.exportToExcel = exportToExcel;
 
 
   loadApplicants();
